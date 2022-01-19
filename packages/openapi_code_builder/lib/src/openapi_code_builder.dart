@@ -45,28 +45,15 @@ class OpenApiLibraryGenerator {
   final _openApiResponseBodyString = refer('OpenApiResponseBodyString', 'package:openapi_base/openapi_base.dart');
   final _openApiResponseBodyBinary = refer('OpenApiResponseBodyBinary', 'package:openapi_base/openapi_base.dart');
   final _openApiEndpoint = refer('ApiEndpoint', 'package:openapi_base/openapi_base.dart');
-  final _endpointProvider = refer('ApiEndpointProvider', 'package:openapi_base/openapi_base.dart');
-  final _openApiUrlEncodeMixin = refer('OpenApiUrlEncodeMixin', 'package:openapi_base/openapi_base.dart');
-  final _openApiClient = refer('OpenApiClient', 'package:openapi_base/openapi_base.dart');
-  final _openApiClientBase = refer('OpenApiClientBase', 'package:openapi_base/openapi_base.dart');
   final _hasSuccessResponse = refer('HasSuccessResponse', 'package:openapi_base/openapi_base.dart');
-//  final _openApiHttpHeaders =
-//      refer('OpenApiHttpHeaders', 'package:openapi_base/openapi_base.dart');
   final _openApiClientRequestBodyJson = refer('OpenApiClientRequestBodyJson', 'package:openapi_base/openapi_base.dart');
   final _openApiClientRequestBodyText = refer('OpenApiClientRequestBodyText', 'package:openapi_base/openapi_base.dart');
   final _openApiClientRequestBodyBinary =
       refer('OpenApiClientRequestBodyBinary', 'package:openapi_base/openapi_base.dart');
-  final _openApiClientRequest = refer('OpenApiClientRequest', 'package:openapi_base/openapi_base.dart');
   final _openApiClientResponse = refer('OpenApiClientResponse', 'package:openapi_base/openapi_base.dart');
-  final _openApiRequestSender = refer('OpenApiRequestSender', 'package:openapi_base/openapi_base.dart');
   final _dio = refer('Dio', 'package:dio/dio.dart');
   final _dioResponse = refer('Response', 'package:dio/dio.dart');
   final _responseMapType = refer('ResponseMap', 'package:openapi_base/openapi_base.dart');
-  final _securityRequirement = refer('SecurityRequirement', 'package:openapi_base/openapi_base.dart');
-  final _securityRequirementScheme = refer('SecurityRequirementScheme', 'package:openapi_base/openapi_base.dart');
-  final _securitySchemeHttp = refer('SecuritySchemeHttp', 'package:openapi_base/openapi_base.dart');
-  final _securitySchemeHttpScheme = refer('SecuritySchemeHttpScheme', 'package:openapi_base/openapi_base.dart');
-  final _securitySchemeApiKey = refer('SecuritySchemeApiKey', 'package:openapi_base/openapi_base.dart');
   final _openApiContentType = refer('OpenApiContentType', 'package:openapi_base/openapi_base.dart');
   final _openApiContentTypeNullable =
       (refer('OpenApiContentType', 'package:openapi_base/openapi_base.dart').type as TypeReference)
@@ -98,17 +85,7 @@ class OpenApiLibraryGenerator {
     for (final schemaEntry in api.components!.schemas!.entries) {
       _schemaReference(schemaEntry.key, schemaEntry.value!);
     }
-    if (api.components!.securitySchemes != null) {
-      for (final securityScheme in api.components!.securitySchemes!.entries) {
-        _securitySchemeReference(securityScheme.key, securityScheme.value!);
-      }
-    }
 
-    // Create path configs
-    final clientInterface = ClassBuilder()
-      ..name = '${baseName}Client'
-      ..implements.add(_openApiClient)
-      ..abstract = true;
     final fields = [
       MapEntry('baseUri', refer('Uri')),
       MapEntry('dio', _dio),
@@ -129,9 +106,6 @@ class OpenApiLibraryGenerator {
     final c = Class((cb) {
       cb.name = baseName;
       cb.implements.add(_openApiEndpoint);
-//      cb.types.add(TypeReference((b) => b
-//        ..symbol = 'T'
-//        ..bound = _openApiRequest));
       cb.abstract = true;
       for (final path in api.paths!.entries) {
         for (final operation in path.value!.operations.entries) {
@@ -152,11 +126,6 @@ class OpenApiLibraryGenerator {
             ..abstract = true
             ..extend = _openApiResponse
             ..constructors.add(Constructor());
-//            ..constructors.add(Constructor((cb) => cb
-//              ..name = '_'
-//              ..requiredParameters.add(Parameter((pb) => pb
-//                ..name = 'status'
-//                ..toThis = true))))
           final mapMethod = MethodBuilder()
             ..name = 'map'
             ..returns = refer('void');
@@ -363,17 +332,7 @@ class OpenApiLibraryGenerator {
             ..docs.add('///')
             ..returns = _referType('Future', generics: [_dioResponse.addGenerics(successResponseBodyType ?? _void)])
             ..modifier = MethodModifier.async;
-          final clientCode = <Code>[
-            /*_openApiClientRequest
-                .newInstance([
-                  literalString(operation.key),
-                  literalString(path.key),
-                  _operationSecurityRequirements(operation.value!.security ?? api.security),
-                ])
-                .assignFinal('request')
-                .statement,*/
-          ];
-          final clientCodeRequest = refer('request');
+          final clientCode = <Code>[];
 
           cb.methods.add(Method((mb) {
             mb
@@ -530,25 +489,6 @@ class OpenApiLibraryGenerator {
                 );
               });
             }
-
-            _routerConfig(
-              path.key,
-              operation.key,
-              refer('impl').property('invoke')([
-                refer('request'),
-                Method((m) => m
-                  ..requiredParameters.add(Parameter((pb) => pb
-                    ..type = refer(baseName)
-                    ..name = 'impl'))
-                  ..lambda = true
-                  ..body = refer('impl')
-                      .property(operationName)(routerParams, routerParamsNamed)
-//                        .returned
-                      .code
-                  ..modifier = MethodModifier.async).closure
-              ]),
-              operation.value!.security ?? api.security,
-            ); //.property(operationName)(parameters));
           }));
 
           clientCode.add(Code('final queryParams = <String, dynamic>{};'));
@@ -566,36 +506,11 @@ class OpenApiLibraryGenerator {
 
           clientMethod.body = Block.of(clientCode);
           clientClass.methods.add(clientMethod.build());
-          clientInterface.methods.add((clientMethod.build().toBuilder()
-                ..annotations.clear()
-                ..body = null)
-              .build());
         }
       }
     });
     lb.body.add(clientClass.build());
 
-    /*lb.body.add(Class((cb) {
-      cb.name = '${baseName}Router';
-      cb.constructors.add(Constructor((cb) => cb
-        ..requiredParameters.add(Parameter((pb) => pb
-          ..name = 'impl'
-          ..toThis = true))));
-      cb.extend = refer(
-          'OpenApiServerRouterBase', 'package:openapi_base/openapi_base.dart');
-      cb.fields.add(Field((fb) => fb
-        ..name = 'impl'
-        ..type = _endpointProvider.addGenerics(refer(c.name))
-        ..modifier = FieldModifier.final$));
-      cb.methods.add(Method((mb) => mb
-        ..name = 'configure'
-        ..annotations.add(_override)
-        ..returns = refer('void')
-        ..body = Block.of(routerConfig.map((e) => e!.statement))));
-    }));
-    lb.body.add(securitySchemesClass.build());*/
-
-//       api.paths.map((key, value) => MapEntry(key, refer('ApiPathConfig').newInstance([value.])))
     return lb.build();
   }
 
@@ -682,45 +597,6 @@ class OpenApiLibraryGenerator {
     }
   }
 
-  void _routerConfig(String path, String operation, Expression? handler, List<APISecurityRequirement?>? security) {
-    _logger.fine('RouteConfig for $path - security: $security');
-    routerConfig.add(refer('addRoute')(
-      [
-        literalString(path),
-        literalString(operation),
-        Method((mb) => mb
-          ..modifier = MethodModifier.async
-          ..requiredParameters.add(Parameter((pb) => pb
-            ..name = 'request'
-            ..type = _openApiRequest))
-          ..body = Block.of([
-            handler!.awaited.returned.statement,
-          ])).closure,
-      ],
-      {
-        'security': _operationSecurityRequirements(security),
-      },
-    ));
-  }
-
-  LiteralListExpression _operationSecurityRequirements(List<APISecurityRequirement?>? security) {
-    return literalList(
-      security?.map(
-            (security) => _securityRequirement(
-              [],
-              {
-                'schemes':
-                    literalList(security!.requirements.entries.map((req) => _securityRequirementScheme.newInstance([], {
-                          'scheme': refer(securitySchemesClass.name!).property(req.key.camelCase),
-                          'scopes': literalList(req.value),
-                        }))),
-              },
-            ),
-          ) ??
-          [],
-    );
-  }
-
   String _classNameForComponent(String componentName) {
     return componentName.pascalCase;
   }
@@ -776,7 +652,6 @@ class OpenApiLibraryGenerator {
     // check for inheritance
     if (obj.allOf != null) {
       for (final baseObj in obj.allOf!) {
-        //implements.add(_schemaReference('${className}Base', baseObj!));
         properties = {
           ...baseObj!.properties!,
           ...properties,
@@ -888,93 +763,15 @@ class OpenApiLibraryGenerator {
           } else {
             return that
               ..constructors.add(Constructor((cb) => cb
-                    ..name = 'fromJson'
-                    ..factory = true
-                    ..requiredParameters.add(Parameter((pb) => pb
-                      ..name = 'jsonMap'
-                      ..type = refer('Map<String, dynamic>')))
-                    ..lambda = true
-                    ..body = fromJsonExpression.code
-//              ..body = Block.of([
-//                InvokeExpression.newOf(
-//                  refer(schemaEntry.key),
-//                  [],
-//                  obj.properties.map((key, value) => MapEntry(
-//                      key,
-//                      refer('map')
-//                          .index(literalString(key))
-//                          .asA(_toDartType(value.type)))),
-//                  [],
-//                ).returned.statement,
-//              ]
-//            )
-                  ));
+                ..name = 'fromJson'
+                ..factory = true
+                ..requiredParameters.add(Parameter((pb) => pb
+                  ..name = 'jsonMap'
+                  ..type = refer('Map<String, dynamic>')))
+                ..lambda = true
+                ..body = fromJsonExpression.code));
           }
         });
-      //..fields.addAll(fields.values);
-      /*..methods.add(
-          Method(
-            (mb) => mb
-              ..name = 'toJson'
-              ..returns = refer('Map<String, dynamic>')
-              ..annotations.addAll(implements.isEmpty ? [] : [_override])
-              ..lambda = true
-              ..body = toJsonExpression!.code,
-          ),
-//                ..methods.add(
-//                Method(
-//                (mb) => mb
-//        ..name = 'toJson'
-//        ..returns = refer('Map<String, dynamic>')
-//          ..lambda = true
-//          ..body = literalMap(
-//            obj.properties
-//                .map((key, value) => MapEntry(key, refer(key))),
-//            _typeString,
-//            refer('dynamic'),
-//          ).code,
-//      ),
-        )
-        ..methods.add(Method((mb) => mb
-          ..name = 'toString'
-          ..returns = _typeString
-          ..annotations.add(_override)
-          ..lambda = true
-          ..body = refer('toJson')([]).property('toString')([]).code));
-*/
-      if (false && obj.additionalPropertyPolicy == APISchemaAdditionalPropertyPolicy.freeForm) {
-        cb.fields.add(Field((fb) => fb
-          ..name = '_additionalProperties'
-          ..type = _referType(
-            'Map',
-            generics: [_typeString, refer('Object')],
-          )
-          ..assignment = literalMap({}, _typeString, refer('Object')).code
-          ..modifier = FieldModifier.final$));
-        cb.methods.add(
-          Method((mb) => mb
-            ..name = 'operator[]='
-            ..returns = refer('void')
-            ..requiredParameters.add(Parameter((pb) => pb
-              ..name = 'key'
-              ..type = _typeString))
-            ..requiredParameters.add(Parameter((pb) => pb
-              ..name = 'value'
-              ..type = refer('Object')))
-            ..lambda = true
-            ..body = refer('_additionalProperties').index(refer('key')).assign(refer('value')).code),
-        );
-        cb.methods.add(
-          Method((mb) => mb
-            ..name = 'operator[]'
-            ..returns = refer('Object')
-            ..requiredParameters.add(Parameter((pb) => pb
-              ..name = 'key'
-              ..type = _typeString))
-            ..lambda = true
-            ..body = refer('_additionalProperties').index(refer('key')).code),
-        );
-      }
     });
     return c;
   }
@@ -1029,55 +826,6 @@ class OpenApiLibraryGenerator {
     }
     // throw StateError(
     //     'Invalid type ${schema.type} - $schema - ${schema.referenceURI}');
-  }
-
-  Expression _securitySchemeReference(String name, APISecurityScheme value) {
-    final schemaType = ArgumentError.checkNotNull(value.type);
-    switch (schemaType) {
-      case APISecuritySchemeType.http:
-        assert(value.scheme == 'bearer');
-        securitySchemesClass.fields.add(
-          Field((fb) => fb
-            ..name = name.camelCase
-            ..modifier = FieldModifier.final$
-            ..static = true
-            ..assignment =
-                _securitySchemeHttp.newInstance([], {'scheme': _securitySchemeHttpScheme.property('bearer')}).code),
-        );
-        return refer(securitySchemesClass.name!).property(name.camelCase);
-      case APISecuritySchemeType.apiKey:
-        final location = ArgumentError.checkNotNull(value.location);
-        final valueName = ArgumentError.checkNotNull(value.name);
-        securitySchemesClass.fields.add(
-          Field((fb) => fb
-            ..name = name.camelCase
-            ..modifier = FieldModifier.final$
-            ..static = true
-            ..assignment = _securitySchemeApiKey.newInstance([], {
-              'name': literalString(value.name!),
-              'readFromRequest': Method((mb) => mb
-                ..requiredParameters.add(Parameter((pb) => pb
-                  ..name = 'request'
-                  ..type = _openApiRequest))
-                ..body = _readFromRequest(location, valueName).code).closure,
-              'writeToRequest': Method((mb) => mb
-                    ..requiredParameters.add(Parameter((pb) => pb
-                      ..name = 'request'
-                      ..type = _openApiClientRequest))
-                    ..requiredParameters.add(Parameter((pb) => pb
-                      ..name = 'value'
-                      ..type = _typeString))
-                    ..body = _writeToRequest(refer('request'), location, valueName, literalList([refer('value')])).code)
-                  .closure,
-            }).code),
-        );
-        return refer(securitySchemesClass.name!).property(name.camelCase);
-      case APISecuritySchemeType.oauth2:
-      case APISecuritySchemeType.openID:
-        throw StateError('Unsupported security scheme ${value.type}');
-    }
-    // throw StateError(
-    //     'Should not happen - unsupported security scheme ${value.type}');
   }
 }
 
