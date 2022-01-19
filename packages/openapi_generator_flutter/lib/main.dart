@@ -1,11 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:logging/logging.dart';
 import 'package:logging_appenders/logging_appenders.dart';
 import 'package:openapi_code_builder/openapi_code_builder.dart';
-import 'package:flutter/services.dart' show rootBundle;
-
-import 'package:logging/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final _logger = Logger('main');
@@ -50,7 +51,9 @@ class _OpenApiGeneratorState extends State<OpenApiGenerator> {
 
   @override
   Widget build(BuildContext context) {
-    final monoFont = GoogleFonts.ubuntuMono();
+    final monoFont = GoogleFonts.ubuntuMono().copyWith(
+      fontFeatures: [FontFeature.tabularFigures()],
+    );
     return Scaffold(
       appBar: AppBar(
         title: Text('OpenAPI Generator'),
@@ -103,10 +106,8 @@ See [GitHub project for details](https://github.com/hpoul/openapi_dart).
   Future<void> _updateInput(String value) async {
     try {
       final api = OpenApiCodeBuilderUtils.loadApiFromYaml(value);
-      final generator =
-          OpenApiLibraryGenerator(api, 'ExampleApi', 'example.dart');
-      final out = OpenApiCodeBuilderUtils.formatLibrary(generator.generate(),
-          useNullSafetySyntax: true);
+      final generator = OpenApiLibraryGenerator(api, 'ExampleApi', 'example.dart', useNullSafetySyntax: true);
+      final out = OpenApiCodeBuilderUtils.formatLibrary(generator.generate(), useNullSafetySyntax: true);
       _output.text = out;
       _logger.info('Updated output.');
     } catch (e, stackTrace) {
