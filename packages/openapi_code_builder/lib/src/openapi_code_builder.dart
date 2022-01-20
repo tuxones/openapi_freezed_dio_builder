@@ -43,8 +43,8 @@ class OpenApiLibraryGenerator {
   final jsonKey = refer('JsonKey', 'package:json_annotation/json_annotation.dart');
   final _dio = refer('Dio', 'package:dio/dio.dart');
   final _dioResponse = refer('Response', 'package:dio/dio.dart');
-  final _apiUuid = refer('ApiUuid', 'uuid.dart');
-  final _apiUuidNullJsonConverter = refer('ApiUuidNullJsonConverter', 'uuid_converter.dart');
+  final _apiUuid = refer('ApiUuid', './uuid.dart');
+  final _apiUuidNullJsonConverter = refer('ApiUuidNullJsonConverter', './uuid_converter.dart');
   final _required = refer('required', 'package:meta/meta.dart');
   final _override = refer('override');
   final _void = refer('void');
@@ -481,8 +481,28 @@ class OpenApiLibraryGenerator {
               clientCode.add(Code('''final uri = baseUri.replace(
         queryParameters: queryParams, path: baseUri.path + '${path.key.replaceAll('{', '\${')}');'''));
 
-              clientCode.add(Code(
-                  'return dio.${operation.key}Uri(uri${operation.value?.requestBody != null ? ', data: body' : ''});'));
+              clientCode.add(
+                Code(
+                    'final response = await dio.${operation.key}Uri<Map<String, dynamic>>(uri${operation.value?.requestBody != null ? ', data: body' : ''});'),
+              );
+
+              if (successResponseBodyType == null) {
+                clientCode.add(Code('return response;'));
+              } else {
+                clientCode.add(
+                  Code('''final parsed = ${successResponseBodyType!.symbol}.fromJson(response.data!);
+                  return Response<${successResponseBodyType!.symbol}>(
+                    data: parsed,
+                    headers: response.headers,
+                    requestOptions: response.requestOptions,
+                    isRedirect: response.isRedirect,
+                    statusCode: response.statusCode,
+                    redirects: response.redirects,
+                    extra: response.extra,
+                  );
+                  '''),
+                );
+              }
 
               clientMethod.body = Block.of(clientCode);
               cb.methods.add(clientMethod.build());

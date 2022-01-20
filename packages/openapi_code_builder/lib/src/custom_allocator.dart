@@ -5,8 +5,12 @@ import 'package:code_builder/code_builder.dart';
 class CustomAllocator implements Allocator {
   static const _doNotPrefix = [
     'dart:core',
+    'dart:typed_data',
     'package:freezed_annotation/freezed_annotation.dart',
     'package:json_annotation/json_annotation.dart',
+    'package:dio/dio.dart',
+    'uuid.dart',
+    'uuid_converter.dart',
   ];
 
   final _imports = <String, int>{};
@@ -19,10 +23,7 @@ class CustomAllocator implements Allocator {
     if (symbol == null) {
       throw ArgumentError.notNull('reference.symbol');
     }
-    if (url == null || _doNotPrefix.contains(url)) {
-      return symbol;
-    }
-    return '_i${_imports.putIfAbsent(url, _nextKey)}.$symbol';
+    return symbol;
   }
 
   int _nextKey() => _keys++;
@@ -31,8 +32,8 @@ class CustomAllocator implements Allocator {
   Iterable<Directive> get imports {
     return _imports.keys
         .map(
-          (u) => Directive.import(u, as: '_i${_imports[u]}'),
+          (u) => Directive.import(u),
         )
-        .followedBy(_doNotPrefix.where((element) => element.startsWith('package:')).map((e) => Directive.import(e)));
+        .followedBy(_doNotPrefix.map((e) => Directive.import(e)));
   }
 }
