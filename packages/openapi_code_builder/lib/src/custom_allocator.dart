@@ -5,6 +5,8 @@ import 'package:code_builder/code_builder.dart';
 class CustomAllocator implements Allocator {
   static const _doNotPrefix = [
     'dart:core',
+    'package:freezed_annotation/freezed_annotation.dart',
+    'package:json_annotation/json_annotation.dart',
   ];
 
   final _imports = <String, int>{};

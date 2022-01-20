@@ -899,7 +899,6 @@ class OpenApiCodeBuilder extends Builder {
     final inputIdBasename = inputId.pathSegments.last.replaceAll('.openapi.yaml', '');
     OpenApiCodeBuilderUtils.loadApiFromYaml(source);
     final api = OpenApiCodeBuilderUtils.loadApiFromYaml(source);
-    print('BASE $inputIdBasename');
 
     final baseName = api.info!.extensions['x-dart-name'] as String? ?? inputIdBasename.pascalCase;
 
@@ -923,7 +922,7 @@ class OpenApiCodeBuilder extends Builder {
 
   @override
   Map<String, List<String>> get buildExtensions => {
-        '.openapi.yaml': ['.openapi.dart']
+        '.openapi.yaml': ['.dart']
       };
 }
 
