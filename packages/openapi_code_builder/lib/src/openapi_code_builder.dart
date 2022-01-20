@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:build/build.dart';
 import 'package:built_collection/built_collection.dart';
@@ -905,8 +906,11 @@ class OpenApiCodeBuilder extends Builder {
     final l = OpenApiLibraryGenerator(
       api,
       baseName,
-      outputId.changeExtension('.g.dart').pathSegments.last,
-      outputId.changeExtension('.freezed.dart').pathSegments.last,
+      AssetId(outputId.package, outputId.path.replaceAll('.openapi', '')).changeExtension('.g.dart').pathSegments.last,
+      AssetId(outputId.package, outputId.path.replaceAll('.openapi', ''))
+          .changeExtension('.freezed.dart')
+          .pathSegments
+          .last,
       useNullSafetySyntax: useNullSafetySyntax,
     ).generate();
 
@@ -916,13 +920,17 @@ class OpenApiCodeBuilder extends Builder {
       useNullSafetySyntax: useNullSafetySyntax,
     );
 //    print(DartFormatter().format('${l.accept(emitter)}'));
-//    print('inputId: $inputId / outputId: $outputId');
+    //print('inputId: $inputId / outputId: $outputId');
     await buildStep.writeAsString(outputId, libraryOutput);
+    Future<void>.delayed(Duration(seconds: 1)).then((_) {
+      // no idea what I'm doing
+      File(outputId.path).rename(outputId.path.replaceAll('openapi.', ''));
+    });
   }
 
   @override
   Map<String, List<String>> get buildExtensions => {
-        '.openapi.yaml': ['.dart']
+        '.openapi.yaml': ['.openapi.dart']
       };
 }
 
