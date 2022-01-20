@@ -21,7 +21,8 @@ class OpenApiLibraryGenerator {
   OpenApiLibraryGenerator(
     this.api,
     this.baseName,
-    this.partFileName, {
+    this.partFileName,
+    this.freezedPartFileName, {
     this.useNullSafetySyntax = false,
     this.apiMethodsWithRequest = false,
   });
@@ -31,6 +32,7 @@ class OpenApiLibraryGenerator {
   /// base name for this API. Should be in `PascalCase`
   final String baseName;
   final String partFileName;
+  final String freezedPartFileName;
   final bool useNullSafetySyntax;
   final bool apiMethodsWithRequest;
 
@@ -40,14 +42,8 @@ class OpenApiLibraryGenerator {
   final jsonKey = refer('JsonKey', 'package:json_annotation/json_annotation.dart');
   final _dio = refer('Dio', 'package:dio/dio.dart');
   final _dioResponse = refer('Response', 'package:dio/dio.dart');
-  final _responseMapType = refer('ResponseMap', 'package:openapi_base/openapi_base.dart');
-  final _openApiContentType = refer('OpenApiContentType', 'package:openapi_base/openapi_base.dart');
-  final _openApiContentTypeNullable =
-      (refer('OpenApiContentType', 'package:openapi_base/openapi_base.dart').type as TypeReference)
-          .rebuild((b) => b.isNullable = true);
-  final _apiUuid = refer('ApiUuid', 'package:openapi_base/openapi_base.dart');
-  final _apiUuidJsonConverter = refer('ApiUuidJsonConverter', 'package:openapi_base/openapi_base.dart');
-  final _apiUuidNullJsonConverter = refer('ApiUuidNullJsonConverter', 'package:openapi_base/openapi_base.dart');
+  final _apiUuid = refer('ApiUuid', 'uuid.dart');
+  final _apiUuidNullJsonConverter = refer('ApiUuidNullJsonConverter', 'uuid_converter.dart');
   final _required = refer('required', 'package:meta/meta.dart');
   final _override = refer('override');
   final _void = refer('void');
@@ -67,6 +63,7 @@ class OpenApiLibraryGenerator {
 
   Library generate() {
     lb.body.add(Directive.part(partFileName));
+    lb.body.add(Directive.part(freezedPartFileName));
 
     // create class for each schema..
     for (final schemaEntry in api.components!.schemas!.entries) {
@@ -80,7 +77,6 @@ class OpenApiLibraryGenerator {
 
     final grouped = api.paths!.entries.groupListsBy((element) =>
         element.value!.operations.values.map((e) => e!.tags ?? []).expand((element) => element).toSet().join());
-    print(grouped);
     final classes = grouped.entries.map((value) => Class((cb) {
           cb
             ..name = '${value.key.titleCase.replaceAll(' ', '')}Api'
@@ -133,11 +129,11 @@ class OpenApiLibraryGenerator {
                     ..annotations.add(_override)
                     ..modifier = FieldModifier.final$
                     ..type = refer('int')));
-                mapMethod.optionalParameters.add(Parameter((pb) => pb
+                /*mapMethod.optionalParameters.add(Parameter((pb) => pb
                   ..name = 'on$codeName'
                   ..asRequired(this, true)
                   ..named = true
-                  ..type = _responseMapType.addGenerics(refer(responseCodeClass.name!))));
+                  ..type = _responseMapType.addGenerics(refer(responseCodeClass.name!))));*/
                 if (mapCode.isNotEmpty) {
                   mapCode.add(const Code(' else '));
                 }
@@ -171,8 +167,8 @@ class OpenApiLibraryGenerator {
                   Reference? bodyType;
                   if (content != null) {
                     const responseContentType = OpenApiContentType.json;
-                    responseContentTypeAssignment = _openApiContentType
-                        .newInstanceNamed('parse', [literalString(responseContentType.toString())]).code;
+                    /*responseContentTypeAssignment = _openApiContentType
+                        .newInstanceNamed('parse', [literalString(responseContentType.toString())]).code;*/
                     bodyType = _schemaReference('${responseClass.name}Body$codeName', content.schema!);
                     responseCodeClass.fields.add(Field((fb) => fb
                       ..name = 'body'
@@ -195,8 +191,8 @@ class OpenApiLibraryGenerator {
                     if (response.value!.content?.length == 1) {
                       final responseContent = response.value!.content!.entries.first;
                       final responseContentType = OpenApiContentType.parse(responseContent.key);
-                      responseContentTypeAssignment = _openApiContentType
-                          .newInstanceNamed('parse', [literalString(responseContentType.toString())]).code;
+                      /*responseContentTypeAssignment = _openApiContentType
+                          .newInstanceNamed('parse', [literalString(responseContentType.toString())]).code;*/
                       bodyType = _toDartType('${responseCodeClass}Content', responseContent.value!.schema!);
                       checkState(responseContent.value!.schema!.type == APIType.string,
                           message: 'schema type not supported for content type '
@@ -209,10 +205,10 @@ class OpenApiLibraryGenerator {
                         ..modifier = FieldModifier.final$));
                       if (responseContent.key.contains('*')) {
                         responseContentTypeAssignment = null;
-                        cb.requiredParameters.add(Parameter((pb) => pb
+                        /*cb.requiredParameters.add(Parameter((pb) => pb
                           ..type = _openApiContentType
                           ..name = 'contentType'
-                          ..toThis = true));
+                          ..toThis = true));*/
                         clientResponseParseParams.add(refer('response').property('responseContentType')([]));
                       }
                       cb.requiredParameters.add(Parameter((pb) => pb
@@ -233,7 +229,7 @@ class OpenApiLibraryGenerator {
                     successResponseBodyType = bodyType;
                     successApiResponse = response;
                   }
-                  responseCodeClass.fields.add(Field(
+                  /*responseCodeClass.fields.add(Field(
                     (fb) => fb
                       ..name = 'contentType'
                       ..type = responseContentTypeAssignment == _literalNullCode
@@ -242,7 +238,7 @@ class OpenApiLibraryGenerator {
                       ..annotations.add(_override)
                       ..modifier = FieldModifier.final$
                       ..assignment = responseContentTypeAssignment,
-                  ));
+                  ));*/
                 });
 
                 responseCodeClass.constructors.add((constructor.toBuilder()
@@ -492,7 +488,9 @@ class OpenApiLibraryGenerator {
             }
           }
         }));
-    lb.body.addAll(classes);
+    for (final element in classes) {
+      lb.body.add(element);
+    }
 
     return lb.build();
   }
@@ -651,7 +649,7 @@ class OpenApiLibraryGenerator {
             ..modifier = FieldModifier.final$
             ..type = fieldType.asNullable(!required.contains(key) && e.defaultValue == null);
           if (fieldType == _apiUuid) {
-            fb.annotations.add(_apiUuidJsonConverter([]));
+            fb.annotations.add(_apiUuidNullJsonConverter([]));
           }
         })));
     // ignore: avoid_function_literals_in_foreach_calls
@@ -901,6 +899,7 @@ class OpenApiCodeBuilder extends Builder {
     final inputIdBasename = inputId.pathSegments.last.replaceAll('.openapi.yaml', '');
     OpenApiCodeBuilderUtils.loadApiFromYaml(source);
     final api = OpenApiCodeBuilderUtils.loadApiFromYaml(source);
+    print('BASE $inputIdBasename');
 
     final baseName = api.info!.extensions['x-dart-name'] as String? ?? inputIdBasename.pascalCase;
 
@@ -908,6 +907,7 @@ class OpenApiCodeBuilder extends Builder {
       api,
       baseName,
       outputId.changeExtension('.g.dart').pathSegments.last,
+      outputId.changeExtension('.freezed.dart').pathSegments.last,
       useNullSafetySyntax: useNullSafetySyntax,
     ).generate();
 

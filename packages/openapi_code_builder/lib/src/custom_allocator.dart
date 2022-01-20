@@ -5,7 +5,6 @@ import 'package:code_builder/code_builder.dart';
 class CustomAllocator implements Allocator {
   static const _doNotPrefix = [
     'dart:core',
-    'package:openapi_base/openapi_base.dart',
   ];
 
   final _imports = <String, int>{};
@@ -32,8 +31,6 @@ class CustomAllocator implements Allocator {
         .map(
           (u) => Directive.import(u, as: '_i${_imports[u]}'),
         )
-        .followedBy(_doNotPrefix
-            .where((element) => element.startsWith('package:'))
-            .map((e) => Directive.import(e)));
+        .followedBy(_doNotPrefix.where((element) => element.startsWith('package:')).map((e) => Directive.import(e)));
   }
 }
