@@ -483,7 +483,7 @@ class OpenApiLibraryGenerator {
 
               clientCode.add(
                 Code(
-                    'final response = await dio.${operation.key}Uri<Map<String, dynamic>>(uri${operation.value?.requestBody != null ? ', data: body' : ''});'),
+                    'final response = await dio.${operation.key}Uri<${successResponseBodyType != null ? 'Map<String, dynamic>' : 'void'}>(uri${operation.value?.requestBody != null ? ', data: body' : ''});'),
               );
 
               if (successResponseBodyType == null) {
