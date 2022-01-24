@@ -472,10 +472,12 @@ class OpenApiLibraryGenerator {
 
               clientCode.add(Code('final queryParams = <String, dynamic>{};'));
 
-              final allParameters = [...?path.value!.parameters, ...?operation.value!.parameters];
+              final allParameters =
+                  operation.value?.parameters?.where((element) => element?.location == APIParameterLocation.query) ??
+                      [];
               for (final element in allParameters) {
                 clientCode.add(Code(
-                    '''if (${element!.name!.camelCase} != null) queryParams['${element.name}'] = ${element.name!.camelCase};'''));
+                    '''if (${element!.name!.camelCase} != null) queryParams['${element.name}'] = ${element.name!.camelCase}.toString();'''));
               }
 
               clientCode.add(Code('''final uri = baseUri.replace(
