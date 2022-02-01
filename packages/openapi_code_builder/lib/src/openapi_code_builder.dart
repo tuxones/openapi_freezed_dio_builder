@@ -49,6 +49,7 @@ class OpenApiLibraryGenerator {
   final _override = refer('override');
   final _void = refer('void');
   final _uint8List = refer('Uint8List', 'dart:typed_data');
+  final _dioResponseBody = refer('ResponseBody', 'package:dio/dio.dart');
   final _typeString = refer('String');
   final _literalNullCode = literalNull.code;
 
@@ -218,7 +219,7 @@ class OpenApiLibraryGenerator {
                         ..toThis = true));
                       if (_typeString == bodyType) {
                         clientResponseParseParams.add(refer('response').property('responseBodyString')([]).awaited);
-                      } else if (_uint8List == bodyType) {
+                      } else if (_dioResponseBody == bodyType) {
                         clientResponseParseParams.add(refer('response').property('responseBodyBytes')([]).awaited);
                       } else {
                         throw StateError('Unsupported bodyType $bodyType for responses.');
@@ -483,12 +484,18 @@ class OpenApiLibraryGenerator {
               clientCode.add(Code('''final uri = baseUri.replace(
         queryParameters: queryParams, path: baseUri.path + '${path.key.replaceAll('{', '\${')}');'''));
 
-              clientCode.add(
-                Code(
-                    'final response = await dio.${operation.key}Uri<${successResponseBodyType != null ? 'Map<String, dynamic>' : 'void'}>(uri${operation.value?.requestBody != null ? ', data: body' : ''});'),
-              );
-
-              if (successResponseBodyType == null) {
+              if (successResponseBodyType == _dioResponseBody) {
+                clientCode.add(
+                  Code(
+                      'final response = await dio.${operation.key}Uri<${successResponseBodyType!.symbol}>(uri${operation.value?.requestBody != null ? ', data: body' : ''}, options: Options(responseType: ResponseType.stream));'),
+                );
+              } else {
+                clientCode.add(
+                  Code(
+                      'final response = await dio.${operation.key}Uri<${successResponseBodyType != null ? 'Map<String, dynamic>' : 'void'}>(uri${operation.value?.requestBody != null ? ', data: body' : ''});'),
+                );
+              }
+              if (successResponseBodyType == null || successResponseBodyType == _dioResponseBody) {
                 clientCode.add(Code('return response;'));
               } else {
                 clientCode.add(
@@ -808,7 +815,7 @@ class OpenApiLibraryGenerator {
           return _apiUuid;
         }
         if (schema.format == 'binary') {
-          return _uint8List;
+          return _dioResponseBody;
         }
         return _typeString;
       case APIType.number:
