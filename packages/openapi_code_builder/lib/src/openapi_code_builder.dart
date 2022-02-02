@@ -355,7 +355,8 @@ class OpenApiLibraryGenerator {
                           assert(paramType == _apiUuid);
                           return _apiUuid.newInstanceNamed('parse', [asString!]);
                         } else if (paramType != _typeString) {
-                          throw StateError('Unsupported paramType for string $paramType');
+                          //throw StateError('Unsupported paramType for string $paramType');
+                          return _apiUuid.newInstanceNamed('parse', [asString!]);
                         }
                         return asString;
                       case APIType.number:
@@ -755,7 +756,8 @@ class OpenApiLibraryGenerator {
                   return that;
                 })
                 ..asRequired(this, required.contains(f.key))
-                ..defaultTo = (properties[f.key]?.defaultValue as Object?)?.let((dynamic it) => literal(it)).code
+                // TODO add default values
+                //..defaultTo = (properties[f.key]?.defaultValue as Object?)?.let((dynamic it) => literal(it)).code
                 ..named = true
                 ..type = _toDartType('$className${f.key.pascalCase}', properties[f.key]!).asNullable(true)
                 ..toThis = false)))
