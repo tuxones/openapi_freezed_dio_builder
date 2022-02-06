@@ -667,6 +667,9 @@ class OpenApiLibraryGenerator {
         };
         override.addAll(baseObj.properties!.entries.map((e) => e.key));
         required.addAll(baseObj.required ?? []);
+        if (baseObj.referenceURI != null) {
+          implements.add(refer(baseObj.referenceURI!.pathSegments.last));
+        }
       }
     }
 
