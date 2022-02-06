@@ -702,7 +702,7 @@ class OpenApiLibraryGenerator {
           ..methods.addAll(fields.values.map((e) => Method((m) {
                 m
                   ..type = MethodType.getter
-                  ..returns = e.type
+                  ..returns = e.type?.asNullable(true)
                   ..name = e.name;
               })))
           ..implements.addAll(implements);
