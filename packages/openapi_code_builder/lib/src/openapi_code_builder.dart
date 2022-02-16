@@ -455,8 +455,13 @@ class OpenApiLibraryGenerator {
                 ...?path.value?.parameters?.where((element) => element?.location == APIParameterLocation.query),
               ];
               for (final element in allParameters) {
-                clientCode.add(Code(
-                    '''if (${element!.name!.camelCase} != null) queryParams['${element.name}'] = ${element.name!.camelCase}.toString();'''));
+                if (element?.schema?.type == APIType.array) {
+                  clientCode.add(Code(
+                      '''if (${element!.name!.camelCase} != null) queryParams['${element.name}'] = ${element.name!.camelCase}.join(',');'''));
+                } else {
+                  clientCode.add(Code(
+                      '''if (${element!.name!.camelCase} != null) queryParams['${element.name}'] = ${element.name!.camelCase}.toString();'''));
+                }
               }
 
               clientCode.add(Code('''final uri = baseUri.replace(
