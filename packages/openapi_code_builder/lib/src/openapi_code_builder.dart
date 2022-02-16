@@ -366,7 +366,7 @@ class OpenApiLibraryGenerator {
                       case APIType.boolean:
                         return refer('paramToBool')([expression]);
                       case APIType.array:
-                        checkState(param.schema!.items!.type == APIType.string);
+                        //checkState(param.schema!.items!.type == APIType.string);
                         if (param.schema!.items!.enumerated != null && param.schema!.items!.enumerated!.isNotEmpty) {
                           final paramEnumType = (paramType as TypeReference).types.first;
                           return expression
@@ -377,6 +377,19 @@ class OpenApiLibraryGenerator {
                                     ..requiredParameters.add(Parameter((pb) => pb..name = 'e'))
                                     ..body =
                                         refer(paramEnumType.symbol! + 'Ext').property('fromName')([refer('e')]).code,
+                                ).closure
+                              ])
+                              .property('toList')([]);
+                        } else {
+                          final paramEnumType = (paramType as TypeReference).types.first;
+                          return refer('paramToInt')([expression]);
+                          return expression
+                              .property('map')([
+                                Method(
+                                  (mb) => mb
+                                    ..lambda = true
+                                    ..requiredParameters.add(Parameter((pb) => pb..name = 'e'))
+                                    ..body = refer('e').code,
                                 ).closure
                               ])
                               .property('toList')([]);
@@ -392,58 +405,21 @@ class OpenApiLibraryGenerator {
                     return refer(param.isRequired ? 'paramRequired' : 'paramOpt')([], {
                       'name': literalString(param.name!),
                       'value': expression!,
-                      'decode': Method((mb) => mb
-                        ..lambda = true
-                        ..requiredParameters.add(Parameter((pb) => pb..name = 'value'))
-                        ..body = decodeParameterFrom(param, refer('value'))!.code).closure,
+                      'decode': Method((mb) {
+                        final paramFrom = decodeParameterFrom(param, refer('value'));
+                        if (paramFrom == null) {
+                          print('paramFrom: $paramFrom');
+                        }
+                        mb
+                          ..lambda = true
+                          ..requiredParameters.add(Parameter((pb) => pb..name = 'value'))
+                          ..body = paramFrom?.code;
+                      }).closure,
                     });
-                  };
-                  final encodeParameter = (Expression expression) {
-                    final schemaType = ArgumentError.checkNotNull(param.schema?.type, 'param.schema.type');
-                    switch (schemaType) {
-                      case APIType.string:
-                        if (param.schema!.format == 'uuid') {
-                          assert(paramType == _apiUuid);
-                          expression = expression.property('encodeToString')([]);
-                        } else if (paramType != _typeString) {
-                          // TODO not sure if this makes sense, maybe we should just
-                          //      use `toString`?
-                          throw StateError('Unsupported paramType for string $paramType');
-                        }
-                        return refer('encodeString')([expression]);
-                      case APIType.number:
-                        break;
-                      case APIType.integer:
-                        return refer('encodeInt')([expression]);
-                      case APIType.boolean:
-                        return refer('encodeBool')([expression]);
-                      case APIType.array:
-                        checkState(param.schema!.items!.type == APIType.string);
-                        if (param.schema!.items!.enumerated != null && param.schema!.items!.enumerated!.isNotEmpty) {
-                          return expression.property('map')([
-                            Method(
-                              (mb) => mb
-                                ..lambda = true
-                                ..requiredParameters.add(Parameter((pb) => pb..name = 'e'))
-                                ..body = refer('e').property('name').code,
-                            ).closure
-                          ]);
-                        }
-                        return expression;
-                      case APIType.object:
-                        return expression;
-                    }
-                    throw StateError('Invalid schema type ${param.schema!.type}}');
                   };
                   final paramLocation = ArgumentError.checkNotNull(param.location);
                   final paramName = ArgumentError.checkNotNull(param.name);
                   routerParamsNamed[paramNameCamelCase] = decodeParameter(_readFromRequest(paramLocation, paramName));
-                  /*clientCode.add(_writeToRequest(
-                clientCodeRequest,
-                paramLocation,
-                paramName,
-                encodeParameter(refer(paramNameCamelCase)),
-              ).statement);*/
                 }
 
                 final body = operation.value!.requestBody;
@@ -474,9 +450,10 @@ class OpenApiLibraryGenerator {
 
               clientCode.add(Code('final queryParams = <String, dynamic>{};'));
 
-              final allParameters =
-                  operation.value?.parameters?.where((element) => element?.location == APIParameterLocation.query) ??
-                      [];
+              final allParameters = [
+                ...?operation.value?.parameters?.where((element) => element?.location == APIParameterLocation.query),
+                ...?path.value?.parameters?.where((element) => element?.location == APIParameterLocation.query),
+              ];
               for (final element in allParameters) {
                 clientCode.add(Code(
                     '''if (${element!.name!.camelCase} != null) queryParams['${element.name}'] = ${element.name!.camelCase}.toString();'''));
