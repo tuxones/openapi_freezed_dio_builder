@@ -815,6 +815,10 @@ class OpenApiLibraryGenerator {
         final type = _toDartType(parent, schema.items!);
         return _referType('List', generics: [type]);
       case APIType.object:
+        if (schema.additionalPropertyPolicy == APISchemaAdditionalPropertyPolicy.freeForm) {
+          // TODO instead there should be an additionalProperties field instead
+          return _referType('Map', generics: [refer('String'), refer('dynamic')]);
+        }
         return _schemaReference(parent, schema);
 //        return refer('dynamic');
     }
