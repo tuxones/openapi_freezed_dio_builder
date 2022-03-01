@@ -458,6 +458,9 @@ class OpenApiLibraryGenerator {
                 if (element?.schema?.type == APIType.array) {
                   clientCode.add(Code(
                       '''if (${element!.name!.camelCase} != null) queryParams['${element.name}'] = ${element.name!.camelCase}.join(',');'''));
+                } else if (element?.schema?.enumerated != null) {
+                  clientCode.add(Code(
+                      '''if (${element!.name!.camelCase} != null) queryParams['${element.name}'] = ${element.name!.camelCase}.name;'''));
                 } else {
                   clientCode.add(Code(
                       '''if (${element!.name!.camelCase} != null) queryParams['${element.name}'] = ${element.name!.camelCase}.toString();'''));
