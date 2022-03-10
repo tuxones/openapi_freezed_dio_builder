@@ -826,6 +826,9 @@ class OpenApiLibraryGenerator {
         if (schema.additionalPropertyPolicy == APISchemaAdditionalPropertyPolicy.freeForm) {
           // TODO instead there should be an additionalProperties field instead
           return _referType('Map', generics: [refer('String'), refer('dynamic')]);
+        } else if (schema.additionalPropertyPolicy == APISchemaAdditionalPropertyPolicy.restricted &&
+            schema.additionalPropertySchema != null) {
+          return _referType('Map', generics: [refer('String'), _toDartType(parent, schema.additionalPropertySchema!)]);
         }
         return _schemaReference(parent, schema);
 //        return refer('dynamic');
