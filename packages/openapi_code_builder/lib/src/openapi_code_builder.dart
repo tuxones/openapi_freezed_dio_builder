@@ -45,6 +45,7 @@ class OpenApiLibraryGenerator {
   final _dioResponse = refer('Response', 'package:dio/dio.dart');
   final _apiUuid = refer('ApiUuid', './uuid.dart');
   final _apiUuidNullJsonConverter = refer('ApiUuidNullJsonConverter', './uuid_converter.dart');
+  final _listApiUuidNullJsonConverter = refer('ListApiUuidNullJsonConverter', './uuid_converter.dart');
   final _required = refer('required', 'package:meta/meta.dart');
   final _override = refer('override');
   final _void = refer('void');
@@ -667,8 +668,10 @@ class OpenApiLibraryGenerator {
             ..name = key.camelCase
             ..modifier = FieldModifier.final$
             ..type = fieldType.asNullable(!required.contains(key) && e.defaultValue == null);
-          if (fieldType == _apiUuid || (fieldType is TypeReference && fieldType.types.firstOrNull == _apiUuid)) {
+          if (fieldType == _apiUuid) {
             fb.annotations.add(_apiUuidNullJsonConverter([]));
+          } else if (fieldType is TypeReference && fieldType.types.firstOrNull == _apiUuid) {
+            fb.annotations.add(_listApiUuidNullJsonConverter([]));
           }
         })));
     // ignore: avoid_function_literals_in_foreach_calls
@@ -738,9 +741,10 @@ class OpenApiLibraryGenerator {
                 ..annotations.add(jsonKey([], {'name': literalString(f.value.name)}))
                 ..let((that) {
                   final fieldType = _toDartType('$className${f.key.pascalCase}', properties[f.key]!);
-                  if (fieldType == _apiUuid ||
-                      (fieldType is TypeReference && fieldType.types.firstOrNull == _apiUuid)) {
+                  if (fieldType == _apiUuid) {
                     that.annotations.add(_apiUuidNullJsonConverter([]));
+                  } else if (fieldType is TypeReference && fieldType.types.firstOrNull == _apiUuid) {
+                    that.annotations.add(_listApiUuidNullJsonConverter([]));
                   }
                   return that;
                 })
