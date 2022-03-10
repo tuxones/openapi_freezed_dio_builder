@@ -408,9 +408,6 @@ class OpenApiLibraryGenerator {
                       'value': expression!,
                       'decode': Method((mb) {
                         final paramFrom = decodeParameterFrom(param, refer('value'));
-                        if (paramFrom == null) {
-                          print('paramFrom: $paramFrom');
-                        }
                         mb
                           ..lambda = true
                           ..requiredParameters.add(Parameter((pb) => pb..name = 'value'))
@@ -682,8 +679,9 @@ class OpenApiLibraryGenerator {
       }
     });
 
-    if (api.components!.schemas!.entries
-        .any((element) => element.value!.allOf?.any((el) => el!.referenceURI.toString().contains(className)) == true)) {
+    if (false &&
+        api.components!.schemas!.entries.any(
+            (element) => element.value!.allOf?.any((el) => el!.referenceURI.toString().contains(className)) == true)) {
       return Mixin((mixing) {
         mixing
           ..name = className
@@ -728,7 +726,7 @@ class OpenApiLibraryGenerator {
         ..annotations.add(freezed)
         ..name = className
         ..mixins.add(refer('_\$$className'))
-        ..mixins.addAll(implements)
+        //..mixins.addAll(implements)
         ..docs.addDartDoc(obj.description)
         ..constructors.add(
           Constructor(
