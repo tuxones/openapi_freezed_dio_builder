@@ -667,7 +667,7 @@ class OpenApiLibraryGenerator {
             ..name = key.camelCase
             ..modifier = FieldModifier.final$
             ..type = fieldType.asNullable(!required.contains(key) && e.defaultValue == null);
-          if (fieldType == _apiUuid) {
+          if (fieldType == _apiUuid || (fieldType is TypeReference && fieldType.types.firstOrNull == _apiUuid)) {
             fb.annotations.add(_apiUuidNullJsonConverter([]));
           }
         })));
@@ -738,7 +738,8 @@ class OpenApiLibraryGenerator {
                 ..annotations.add(jsonKey([], {'name': literalString(f.value.name)}))
                 ..let((that) {
                   final fieldType = _toDartType('$className${f.key.pascalCase}', properties[f.key]!);
-                  if (fieldType == _apiUuid) {
+                  if (fieldType == _apiUuid ||
+                      (fieldType is TypeReference && fieldType.types.firstOrNull == _apiUuid)) {
                     that.annotations.add(_apiUuidNullJsonConverter([]));
                   }
                   return that;
