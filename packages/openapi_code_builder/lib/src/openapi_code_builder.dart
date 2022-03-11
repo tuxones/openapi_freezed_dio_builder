@@ -801,6 +801,9 @@ class OpenApiLibraryGenerator {
         if (schema.enumerated != null && schema.enumerated!.isNotEmpty) {
           return _schemaReference(parent, schema);
         }
+        if (schema.format == 'decimal') {
+          return refer('double');
+        }
         if (schema.format == 'date-time') {
           return refer('DateTime');
         }
