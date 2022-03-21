@@ -329,7 +329,8 @@ class OpenApiLibraryGenerator {
               } else if (successResponseBodyType.symbol == 'List') {
                 final listType = (successResponseBodyType as TypeReference).types.last;
                 clientCode.add(
-                  Code('''final parsed = (response.data as List).map((e) => ${listType.symbol}.fromJson(e)).toList();
+                  Code(
+                      '''final parsed = (response.data as List<Map<String, dynamic>>).map((e) => ${listType.symbol}.fromJson(e)).toList();
                   return Response<${successResponseBodyType.symbol}<${listType.symbol}>>(
                     data: parsed,
                     headers: response.headers,
@@ -539,8 +540,9 @@ class OpenApiLibraryGenerator {
       }
     });
 
-    if (api.components!.schemas!.entries
-        .any((element) => element.value!.allOf?.any((el) => el!.referenceURI.toString().contains(className)) == true)) {
+    if (false &&
+        api.components!.schemas!.entries.any(
+            (element) => element.value!.allOf?.any((el) => el!.referenceURI.toString().contains(className)) == true)) {
       return Mixin((mixing) {
         mixing
           ..name = className
@@ -585,7 +587,7 @@ class OpenApiLibraryGenerator {
         ..annotations.add(freezed)
         ..name = className
         ..mixins.add(refer('_\$$className'))
-        ..mixins.addAll(implements)
+        //..mixins.addAll(implements)
         ..docs.addDartDoc(obj.description)
         ..constructors.add(
           Constructor(
