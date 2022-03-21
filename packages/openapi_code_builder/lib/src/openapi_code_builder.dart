@@ -318,6 +318,11 @@ class OpenApiLibraryGenerator {
                   Code(
                       'final response = await dio.${operation.key}Uri<${successResponseBodyType!.symbol}>(uri${operation.value?.requestBody != null ? ', data: body' : ''}, options: Options(responseType: ResponseType.stream));'),
                 );
+              } else if (successResponseBodyType?.symbol == 'List') {
+                clientCode.add(
+                  Code(
+                      'final response = await dio.${operation.key}Uri<${successResponseBodyType != null ? 'List<dynamic>' : 'void'}>(uri${operation.value?.requestBody != null ? ', data: body' : ''});'),
+                );
               } else {
                 clientCode.add(
                   Code(
@@ -330,7 +335,7 @@ class OpenApiLibraryGenerator {
                 final listType = (successResponseBodyType as TypeReference).types.last;
                 clientCode.add(
                   Code(
-                      '''final parsed = (response.data as List<Map<String, dynamic>>).map((e) => ${listType.symbol}.fromJson(e)).toList();
+                      '''final parsed = response.data!.map((dynamic e) => ${listType.symbol}.fromJson(e as Map<String, dynamic>)).toList();
                   return Response<${successResponseBodyType.symbol}<${listType.symbol}>>(
                     data: parsed,
                     headers: response.headers,
