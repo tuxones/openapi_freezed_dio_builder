@@ -510,7 +510,10 @@ class OpenApiLibraryGenerator {
         return e;
       }
       final c = _createSchemaClass(componentName, schemaObject);
-      lb.body.add(c);
+      // TODO figure out a better way to not add all schema classes
+      if (schemaObject.properties?.values.none((p0) => p0!.format == 'binary') == true) {
+        lb.body.add(c);
+      }
 
       if (c is Class) {
         return refer(c.name);
