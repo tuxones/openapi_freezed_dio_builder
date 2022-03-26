@@ -325,7 +325,7 @@ class OpenApiLibraryGenerator {
                       'final response = await dio.${operation.key}Uri<${successResponseBodyType != null ? 'List<dynamic>' : 'void'}>(uri${operation.value?.requestBody != null ? ', data: body' : ''});'),
                 );
               } else if (operation.value!.requestBody?.content?.keys.firstOrNull == 'multipart/form-data') {
-                final body = '''FormData.fromMap({
+                final body = '''FormData.fromMap(<String, dynamic>{
                 ${operation.value!.requestBody!.content!.values.first!.schema!.properties!.entries.map((element) => '\'${element.key}\': ${element.value!.type == APIType.object ? element.key + '.toJson()' : element.key}').join(',')}
       })''';
                 clientCode.add(
