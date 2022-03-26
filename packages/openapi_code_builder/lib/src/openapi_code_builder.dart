@@ -51,6 +51,7 @@ class OpenApiLibraryGenerator {
   final _void = refer('void');
   final _uint8List = refer('Uint8List', 'dart:typed_data');
   final _dioResponseBody = refer('ResponseBody', 'package:dio/dio.dart');
+  final _dioMultipartFile = refer('MultipartFile', 'package:dio/dio.dart');
   final _typeString = refer('String');
   final _literalNullCode = literalNull.code;
 
@@ -323,6 +324,14 @@ class OpenApiLibraryGenerator {
                   Code(
                       'final response = await dio.${operation.key}Uri<${successResponseBodyType != null ? 'List<dynamic>' : 'void'}>(uri${operation.value?.requestBody != null ? ', data: body' : ''});'),
                 );
+              } else if (operation.value!.requestBody?.content?.keys.firstOrNull == 'multipart/form-data') {
+                final body = '''FormData.fromMap({
+                ${operation.value!.requestBody!.content!.values.first!.schema!.properties!.entries.map((element) => '\'${element.key}\': ${element.value!.type == APIType.object ? element.key + '.toJson()' : element.key}').join(',')}
+      })''';
+                clientCode.add(
+                  Code(
+                      'final response = await dio.${operation.key}Uri<${successResponseBodyType != null ? 'Map<String, dynamic>' : 'void'}>(uri${operation.value?.requestBody != null ? ', data: $body' : ''});'),
+                );
               } else {
                 clientCode.add(
                   Code(
@@ -419,9 +428,6 @@ class OpenApiLibraryGenerator {
         ..name = 'body'
         ..type = bodyType));
 
-      /*clientCode.add(
-        refer('request').property('setBody')([encodeBody]).statement,
-      );*/
       routerParams.add(decodeBody);
     }
 
@@ -439,6 +445,21 @@ class OpenApiLibraryGenerator {
         _toDartType(operationName, reqBody.schema!),
         refer('request').property('readBodyBytes')([]).awaited,
       );
+    } else if (contentType.contentType == 'multipart/form-data') {
+      for (final property in reqBody.schema!.properties!.entries) {
+        mb.addDartDoc(reqBody.schema!.description, prefix: '[${property.key}]:');
+        mb.requiredParameters.add(
+          Parameter((pb) => pb
+            ..name = property.key
+            ..type = _toDartType(operationName, property.value!)),
+        );
+        clientMethod.addDartDoc(reqBody.schema!.description, prefix: '[${property.key}]:');
+        clientMethod.requiredParameters.add(Parameter((pb) => pb
+          ..name = property.key
+          ..type = _toDartType(operationName, property.value!)));
+
+        //routerParams.add(decodeBody);
+      }
     } else {
       final reference = _schemaReference('${operationName.pascalCase}Schema', reqBody.schema!);
 
@@ -677,7 +698,12 @@ class OpenApiLibraryGenerator {
           return _apiUuid;
         }
         if (schema.format == 'binary') {
-          return _dioResponseBody;
+          // TODO restrict to requests
+          if (parent.toLowerCase().contains('add')) {
+            return _dioMultipartFile;
+          } else {
+            return _dioResponseBody;
+          }
         }
         return _typeString;
       case APIType.number:
