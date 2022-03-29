@@ -416,7 +416,7 @@ class OpenApiLibraryGenerator {
           Parameter((pb) => pb
             ..name = 'body'
             ..required = false
-            ..type = bodyType),
+            ..type = bodyType.asNullable(true)),
         );
       }
       clientMethod.addDartDoc(reqBody.schema!.description, prefix: '[body]:');
@@ -428,7 +428,7 @@ class OpenApiLibraryGenerator {
         clientMethod.optionalParameters.add(Parameter((pb) => pb
           ..name = 'body'
           ..required = false
-          ..type = bodyType));
+          ..type = bodyType.asNullable(true)));
       }
 
       routerParams.add(decodeBody);
