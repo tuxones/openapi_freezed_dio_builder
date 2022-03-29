@@ -415,6 +415,7 @@ class OpenApiLibraryGenerator {
         mb.optionalParameters.add(
           Parameter((pb) => pb
             ..name = 'body'
+            ..required = false
             ..type = bodyType),
         );
       }
@@ -426,6 +427,7 @@ class OpenApiLibraryGenerator {
       } else {
         clientMethod.optionalParameters.add(Parameter((pb) => pb
           ..name = 'body'
+          ..required = false
           ..type = bodyType));
       }
 
