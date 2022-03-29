@@ -282,6 +282,7 @@ class OpenApiLibraryGenerator {
                     _createRequestBody(
                       contentType,
                       reqBody!,
+                      body.isRequired,
                       operationName,
                       mb,
                       routerParams,
@@ -398,35 +399,35 @@ class OpenApiLibraryGenerator {
     // throw StateError('Invalid location: $location');
   }
 
-  Expression _writeToRequest(Reference request, APIParameterLocation location, String name, Expression value) {
-    switch (location) {
-      case APIParameterLocation.query:
-        return request.property('addQueryParameter')([literalString(name), value]);
-      case APIParameterLocation.header:
-        return request.property('addHeaderParameter')([literalString(name), value]);
-      case APIParameterLocation.path:
-        return request.property('addPathParameter')([literalString(name), value]);
-      case APIParameterLocation.cookie:
-        return request.property('addCookieParameter')([literalString(name), value]);
-    }
-    // throw StateError('Invalid location: $location');
-  }
-
-  void _createRequestBody(OpenApiContentType contentType, APIMediaType reqBody, String operationName, MethodBuilder mb,
-      List<Expression?> routerParams, MethodBuilder clientMethod, List<Code> clientCode) {
+  void _createRequestBody(OpenApiContentType contentType, APIMediaType reqBody, bool isRequired, String operationName,
+      MethodBuilder mb, List<Expression?> routerParams, MethodBuilder clientMethod, List<Code> clientCode) {
     _logger.finer('reqBody.schema: ${reqBody.schema}');
 
     void _addRequestBody(Reference bodyType, Expression? decodeBody) {
       mb.addDartDoc(reqBody.schema!.description, prefix: '[body]:');
-      mb.requiredParameters.add(
-        Parameter((pb) => pb
-          ..name = 'body'
-          ..type = bodyType),
-      );
+      if (isRequired) {
+        mb.requiredParameters.add(
+          Parameter((pb) => pb
+            ..name = 'body'
+            ..type = bodyType),
+        );
+      } else {
+        mb.optionalParameters.add(
+          Parameter((pb) => pb
+            ..name = 'body'
+            ..type = bodyType),
+        );
+      }
       clientMethod.addDartDoc(reqBody.schema!.description, prefix: '[body]:');
-      clientMethod.requiredParameters.add(Parameter((pb) => pb
-        ..name = 'body'
-        ..type = bodyType));
+      if (isRequired) {
+        clientMethod.requiredParameters.add(Parameter((pb) => pb
+          ..name = 'body'
+          ..type = bodyType));
+      } else {
+        clientMethod.optionalParameters.add(Parameter((pb) => pb
+          ..name = 'body'
+          ..type = bodyType));
+      }
 
       routerParams.add(decodeBody);
     }
