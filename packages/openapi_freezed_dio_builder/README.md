@@ -42,6 +42,12 @@ right inside your browser: https://jonasbark.github.io/openapi_freezed_dio_build
    ```
 5. Implement and client. (see below)
 
+# Supported OpenAPI types
+Incomplete List, aside from standard model and API endpoints:
+- Multipart request
+- Freeform definitions
+- UUID format
+- Enums
 
 # Example schema
 
