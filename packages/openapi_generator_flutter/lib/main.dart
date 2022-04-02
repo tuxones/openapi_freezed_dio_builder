@@ -6,7 +6,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logging/logging.dart';
 import 'package:logging_appenders/logging_appenders.dart';
-import 'package:openapi_code_builder/openapi_code_builder.dart';
+import 'package:openapi_freezed_dio_builder/openapi_freezed_dio_builder.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final _logger = Logger('main');
@@ -68,11 +68,11 @@ class _OpenApiGeneratorState extends State<OpenApiGenerator> {
             data: '''
 # OpenAPI Generator
 
-Generates dart code for client AND server applications from OpenAPI 3.0 
+Generates dart code for client from OpenAPI 3.0 
 yaml schema file. Typically this is used in a project using
 build_runner. This is just a quick example what kind of code is generated :-)
 
-See [GitHub project for details](https://github.com/hpoul/openapi_dart).
+See [GitHub project for details](https://github.com/jonasbark/openapi_dart).
           ''',
           ),
           Expanded(
@@ -108,7 +108,11 @@ See [GitHub project for details](https://github.com/hpoul/openapi_dart).
       final api = OpenApiCodeBuilderUtils.loadApiFromYaml(value);
       final generator = OpenApiLibraryGenerator(api, 'ExampleApi', 'example.g.dart', 'example.freezed.dart',
           useNullSafetySyntax: true);
-      final out = OpenApiCodeBuilderUtils.formatLibrary(await generator.generate(), useNullSafetySyntax: true);
+      final out = OpenApiCodeBuilderUtils.formatLibrary(
+        await generator.generate(),
+        useNullSafetySyntax: true,
+        usesUuid: value.contains('format: uuid'),
+      );
       _output.text = out;
       _logger.info('Updated output.');
     } catch (e, stackTrace) {
