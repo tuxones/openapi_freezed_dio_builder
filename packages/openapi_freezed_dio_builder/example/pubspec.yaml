@@ -15,7 +15,7 @@ dependencies:
     path: ../../openapi_base
 
 dev_dependencies:
-  openapi_code_builder:
+  openapi_freezed_dio_builder:
     path: ../
   json_serializable: ^4.1.0
   build_runner: ^2.0.6

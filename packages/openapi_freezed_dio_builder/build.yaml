@@ -1,6 +1,6 @@
 builders:
-  openapi_code_builder:
-    import: 'package:openapi_code_builder/openapi_freezed_dio_builder.dart'
+  openapi_freezed_dio_builder:
+    import: 'package:openapi_freezed_dio_builder/openapi_freezed_dio_builder.dart'
     builder_factories: ['openapiCodeBuilder']
     build_extensions: {".openapi.yaml": [".openapi.dart"]}
     auto_apply: dependents

@@ -2,4 +2,4 @@
 
 Dart implementation to generate (dart) client libraries with Freezed and Dio.
 
-See [packages/openapi_code_builder/README.md](packages/openapi_freezed_dio_builder/README.md) for details.
+See [packages/openapi_freezed_dio_builder/README.md](packages/openapi_freezed_dio_builder/README.md) for details.
