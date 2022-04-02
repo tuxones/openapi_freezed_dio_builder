@@ -12,7 +12,7 @@ See [directory for an example usage](example/).
 You can also [try out the code generator
 right inside your browser](https://jonasbark.github.io/openapi_freezed_dio_builder/): https://jonasbark.github.io/openapi_freezed_dio_builder/
 
-![Flutter Screenshot](_docs/screenshot.jpg)
+![Flutter Screenshot](https://github.com/jonasbark/openapi_freezed_dio_builder/raw/master/packages/openapi_freezed_dio_builder/_docs/screenshot.jpg)
 
 # Usage
 
