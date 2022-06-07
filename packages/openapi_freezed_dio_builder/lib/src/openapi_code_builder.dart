@@ -847,8 +847,8 @@ class OpenApiCodeBuilder extends Builder {
     final l = OpenApiLibraryGenerator(
       api,
       baseName,
-      AssetId(outputId.package, outputId.path.replaceAll('.openapi', '')).changeExtension('.g.dart').pathSegments.last,
-      AssetId(outputId.package, outputId.path.replaceAll('.openapi', ''))
+      AssetId(outputId.package, outputId.path).changeExtension('.g.dart').pathSegments.last,
+      AssetId(outputId.package, outputId.path)
           .changeExtension('.freezed.dart')
           .pathSegments
           .last,
@@ -864,10 +864,10 @@ class OpenApiCodeBuilder extends Builder {
 //    print(DartFormatter().format('${l.accept(emitter)}'));
     //print('inputId: $inputId / outputId: $outputId');
     await buildStep.writeAsString(outputId, libraryOutput);
-    Future<void>.delayed(Duration(seconds: 1)).then((_) {
-      // no idea what I'm doing
-      File(outputId.path).rename(outputId.path.replaceAll('openapi.', ''));
-    });
+    // Future<void>.delayed(Duration(seconds: 1)).then((_) {
+    //   // no idea what I'm doing
+    //   File(outputId.path).rename(outputId.path.replaceAll('openapi.', ''));
+    // });
   }
 
   @override
