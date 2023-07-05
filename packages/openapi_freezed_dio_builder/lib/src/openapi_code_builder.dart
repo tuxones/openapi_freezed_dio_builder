@@ -653,7 +653,7 @@ class OpenApiLibraryGenerator {
                 // TODO add default values
                 //..defaultTo = (properties[f.key]?.defaultValue as Object?)?.let((dynamic it) => literal(it)).code
                 ..named = true
-                ..type = _toDartType('$className${f.key.pascalCase}', properties[f.key]!).asNullable(true)
+                ..type = _toDartType('$className${f.key.pascalCase}', properties[f.key]!).asNullable(properties[f.key]!.isNullable ?? true)
                 ..toThis = false)))
               ..initializers.addAll(useNullSafetySyntax
                   ? []
