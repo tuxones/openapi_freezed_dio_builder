@@ -187,7 +187,7 @@ class OpenApiLibraryGenerator {
                     clientMethod.docs.add('/// * [$paramNameCamelCase]: ${param.description}');
                   }
                   final p = Parameter((pb) => pb
-                    ..name = paramNameCamelCase
+                    ..name = param.name!
                     ..type = paramType.asNullable(!param.isRequired)
                     ..asRequired(this, param.isRequired)
                     ..named = true);
@@ -639,7 +639,7 @@ class OpenApiLibraryGenerator {
               ..optionalParameters.addAll(fields.entries.map((f) => Parameter((pb) => pb
 //            ..docs.addAll(f.docs)
                 ..name = f.value.name
-                ..annotations.add(jsonKey([], {'name': literalString(f.value.name)}))
+                ..annotations.add(jsonKey([], {'name': literalString(f.key)}))
                 ..let((that) {
                   final fieldType = _toDartType('$className${f.key.pascalCase}', properties[f.key]!);
                   if (fieldType == _apiUuid) {
